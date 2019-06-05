@@ -180,7 +180,7 @@ EOT;
             throw RuntimeException::fromStatementErrorInfo($statement->errorInfo());
         }
 
-        return '1' === $statement->fetchColumn();
+        return 1 === (int) $statement->fetchColumn();
     }
 
     public function create(Stream $stream): void
@@ -336,8 +336,12 @@ SELECT COUNT(*) FROM `$tableName` $queryHint
 $whereCondition
 EOT;
 
-        $selectStatement = $this->connection->prepare($selectQuery);
-        $selectStatement->setFetchMode(PDO::FETCH_OBJ);
+        try {
+            $selectStatement = $this->connection->prepare($selectQuery);
+            $selectStatement->setFetchMode(PDO::FETCH_OBJ);
+        } catch (PDOException $exception) {
+            throw StreamNotFound::with($streamName);
+        }
 
         $selectStatement->bindValue(':fromNumber', $fromNumber, PDO::PARAM_INT);
         $selectStatement->bindValue(':limit', $limit, PDO::PARAM_INT);
